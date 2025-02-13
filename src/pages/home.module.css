@@ -1,0 +1,25 @@
+.container {
+    height: 100vh;
+    padding: 20px;
+    background-color: #fff;
+    background-image: url('/public/pattern.png');
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.welcomeText {
+    font-size: 24px;
+    font-weight: bold;
+    color: gray;
+    text-align: center
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}

@@ -1,0 +1,17 @@
+.topbar {
+    position: fixed;
+    top: 0;
+    left:0;
+    right:0;
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background-color: white;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.userName {
+    flex: 1
+}
