@@ -1,12 +1,11 @@
-import { Message } from "../../pages/Chat"
 import "./message.css"
 
-interface Props {
-    data: Message;
+type Props = {
+    data: typeMessage;
     isMine: boolean;
 }
 
-export const MessageItem = ({ data: { date, userName, message }, isMine }: Props) => {
+export const MessageItem = ({ data: { date, username, content }, isMine }: Props) => {
 
     const parseDate = (dateStr: string) => {
         const date = new Date(dateStr)
@@ -17,8 +16,8 @@ export const MessageItem = ({ data: { date, userName, message }, isMine }: Props
         <li 
             className={`message ${isMine ? "right" : ""}`}
         >
-            <small className="name" >{userName}</small>
-            <p>{message}</p>
+            <small className="name" >{username}</small>
+            <p>{content}</p>
             <small className="time">{parseDate(date)}</small>
         </li>
     )

@@ -4,84 +4,71 @@ import styles from "./chat.module.css";
 import { Topbar } from "../components/Topbar";
 import { ButtonWithIcon } from "../components/ButtonWithIcon";
 import { useNavigate } from "react-router-dom";
-import { socket } from "../utils/socket";
 import { MessageItem } from "../components/MessageItem";
+import Session from "../tools/models/Session";
+import Message from "../tools/models/Message";
 
-interface User {
-    userId: string;
-    userName: string;
-}
-
-export interface Message {
-    message: string;
-    date: string;
-    userId: string;
-    userName: string
-}
 
 function Chat() {
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<typeMessage[]>([]);
     const [message, setMessage] = useState("");
     const [userName, setUserName] = useState("")
-    const [_, setUsers] = useState<User[]>([])
 
     const ref = useRef<HTMLElement>(null)
 
     const navigate = useNavigate()
 
     useEffect( () => {
-        const userName = sessionStorage.getItem("userName")
-        if( !userName ) {
+        const username = sessionStorage.getItem("userName")
+        if( !username ) {
             navigate("/")
             return
-        }
-        setUserName(userName)
+        };
 
-        socket.emit("user-connected", { userName })
-    }, [])
+        setUserName(username);
 
-    useEffect( () => {
-        socket.on("user-connected", async ({ userId, userName, allUsersInChat }) => {
-            setUsers( prev => [...prev, { userId, userName }])
-            if( userId === socket.id ) {
-                setUsers( prev => [...prev, ...allUsersInChat])
+        (async ()=>{
+            const [ user ] = await Session.search("username", username)
+            if( user ) {
+                await Session.put(user.id, { ...user, connected: true })
             }
-        })
-
-        socket.on("user-disconnected", ({ userId }) => {
-            setUsers( prevUsers => prevUsers.filter( user => user.userId !== userId ) )
-        })
-
-        socket.on("message", ({ message, date, userId, userName }: Message) => {
-            setMessages((prev) => [
-                ...prev, 
-                { 
-                    message, 
-                    date, 
-                    userId, 
-                    userName
-                }
-            ])
-        })
-
-        return () => {
-            socket.off("user-connected")
-            socket.off("user-disconnected")
-            socket.off("message")
-        }
+            else {
+                await Session.post({ username, connected: true })
+            }
+        })()
     }, [])
+
+    useEffect(()=>{
+        Session.onChange( (data:any) => {
+            console.log( data )
+        })
+        Message.onChange( (data:any) => {
+            setMessages( data )
+        })
+    },[])
+
 
     useEffect( () => {
         ref.current?.scrollTo( 0, ref.current?.scrollHeight );
 
     }, [messages])
 
-    const onSubmit = (event: React.FormEvent) => {
+    const onSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
         if( message === "" ) return
-        socket.emit("message", { message, date: Date(), userId: socket.id, userName })
+        await Message.post({
+            content: message,
+            date: Date(),
+            time: Date.now(),
+            username: userName
+        })
+        
         setMessage("")
     };
+
+    const sortByDate = (msgA:typeMessage, msgB:typeMessage) => {
+        return msgA.time > msgB.time ? 1 : -1
+    }
 
     return (
         <div className={styles.container}>
@@ -89,8 +76,8 @@ function Chat() {
 
                 <Topbar name={userName} />
                 <ul className={styles.messages}>
-                    {messages.map((message, index) => (
-                        <MessageItem data={message} isMine={message.userId === socket.id} key={index} />
+                    {messages.sort( sortByDate ).map((message, index) => (
+                        <MessageItem data={message} isMine={message.username === userName} key={index} />
                     ))}
                 </ul>
                 <form className={styles.form} onSubmit={onSubmit}>
